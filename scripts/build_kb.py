@@ -9,7 +9,8 @@ from pathlib import Path
 
 import faiss
 import numpy as np
-from sklearn.feature_extraction.text import HashingVectorizer
+
+from mtguard.embedder import EMBED_DIM, Embedder
 
 
 def chunk_markdown(text: str, source: str, chunk_size: int = 400) -> list[dict]:
@@ -39,13 +40,13 @@ def build_kb(pack_dir: Path) -> None:
         source_files.append(md_path.name)
         all_chunks.extend(chunk_markdown(text, md_path.name))
 
-    dim = 2048
+    dim = EMBED_DIM
+    embedder = Embedder(n_features=dim)
     if all_chunks:
-        vectorizer = HashingVectorizer(n_features=dim, alternate_sign=False, norm="l2")
         texts = [c["text"] for c in all_chunks]
-        matrix = vectorizer.transform(texts).astype(np.float32)
+        matrix = embedder.embed_many(texts)
         index = faiss.IndexFlatIP(dim)
-        index.add(matrix.toarray())
+        index.add(matrix)
         faiss.write_index(index, str(kb_dir / "index.faiss"))
     else:
         index = faiss.IndexFlatIP(dim)
