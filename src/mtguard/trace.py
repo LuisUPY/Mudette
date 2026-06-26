@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from mtguard.models import (
@@ -83,3 +84,40 @@ def build_turn_trace(
         gate=gate_to_dict(gate),
         latency_ms=round(latency_ms, 2),
     )
+
+
+def format_trace_panel(trace: dict[str, Any] | None) -> str:
+    if not trace:
+        return "*Sin turnos aún.*"
+    fusion = trace.get("fusion") or {}
+    l1 = trace.get("l1") or {}
+    l2 = trace.get("l2") or {}
+    gate = trace.get("gate") or {}
+    lines = [
+        f"### Turn {trace.get('turn_index', '?')}",
+        f"**Verdict:** `{fusion.get('verdict', '?')}` · **Risk:** {fusion.get('risk_score', 0)}/100",
+        f"**Latency:** {trace.get('latency_ms', 0)} ms",
+        "",
+        f"**L1** — hit={l1.get('hit')} severity={l1.get('severity')} rule={l1.get('rule_id')}",
+        (
+            f"**L2** — safe={l2.get('safe_score')} max_prox={l2.get('max_proximity')} "
+            f"region={l2.get('max_region')} approaching={l2.get('approaching_sensitive')} "
+            f"escalation={l2.get('escalation_pattern')}"
+        ),
+        f"**Gate** — allow_llm={gate.get('allow_llm')} banner={gate.get('show_banner')}",
+    ]
+    factors = fusion.get("factors") or []
+    if factors:
+        lines.append(f"**Factors:** {', '.join(factors)}")
+    return "\n".join(lines)
+
+
+def format_layers_modal(trace: dict[str, Any] | None) -> str:
+    if not trace:
+        return "No hay datos de capas para este turno."
+    sections = []
+    for layer in ("l1", "l2", "fusion", "judge", "gate"):
+        data = trace.get(layer)
+        if data is not None:
+            sections.append(f"#### {layer.upper()}\n```json\n{json.dumps(data, indent=2)}\n```")
+    return "\n\n".join(sections)

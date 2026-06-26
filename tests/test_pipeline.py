@@ -9,6 +9,7 @@ import pytest
 
 from mtguard.models import JudgeResult, Verdict
 from mtguard.pipeline import MTGuardPipeline
+from mtguard.trace import format_layers_modal, format_trace_panel
 
 ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / "demo_pack" / "nexa_copilot"
@@ -75,3 +76,23 @@ class TestPipelineVerdicts:
         )
         assert fusion.verdict == Verdict.CONTAIN
         assert trace.gate["allow_llm"] is False
+
+
+class TestTraceFormatting:
+    def test_format_trace_panel_empty(self) -> None:
+        assert "Sin turnos" in format_trace_panel(None)
+
+    def test_format_layers_modal(self, pipeline: MTGuardPipeline) -> None:
+        trace, _, _ = pipeline.process_turn("VPN help")
+        d = trace.to_dict()
+        panel = format_trace_panel(d)
+        layers = format_layers_modal(d)
+        assert "L1" in panel
+        assert "L2" in panel
+        assert '"l1"' in layers or "L1" in layers
+
+
+def test_gradio_ui_builds() -> None:
+    from mtguard.demo.app import build_ui
+
+    build_ui()

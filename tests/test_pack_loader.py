@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from mtguard.pack_loader import REQUIRED_FILES, DemoPack
+from mtguard.pack_loader import REQUIRED_FILES, DemoPack, get_playbook_scenario, playbook_choices
 
 ROOT = Path(__file__).resolve().parents[1]
 PACK_DIR = ROOT / "demo_pack" / "nexa_copilot"
@@ -45,3 +45,20 @@ class TestPackLoader:
     def test_missing_pack_raises(self) -> None:
         with pytest.raises(FileNotFoundError):
             DemoPack.load(ROOT / "nonexistent_pack")
+
+    def test_playbook_choices_benign(self) -> None:
+        pack = DemoPack.load(PACK_DIR)
+        choices = playbook_choices(pack, "benign")
+        assert len(choices) >= 2
+        assert choices[0][1] == "ticket_status"
+
+    def test_playbook_choices_redteam(self) -> None:
+        pack = DemoPack.load(PACK_DIR)
+        choices = playbook_choices(pack, "redteam")
+        assert any(c[1] == "crescendo_credentials" for c in choices)
+
+    def test_get_playbook_scenario(self) -> None:
+        pack = DemoPack.load(PACK_DIR)
+        scenario = get_playbook_scenario(pack, "redteam", "jailbreak_direct")
+        assert scenario is not None
+        assert len(scenario["turns"]) == 1

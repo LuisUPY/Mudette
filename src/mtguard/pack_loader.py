@@ -77,3 +77,31 @@ class DemoPack:
         if len(self.attack_playbook.get("scenarios", [])) < 3:
             errors.append("attack_playbook needs at least 3 scenarios")
         return errors
+
+
+def playbook_for_mode(pack: DemoPack, mode: str) -> dict:
+    return pack.benign_playbook if mode == "benign" else pack.attack_playbook
+
+
+def playbook_choices(pack: DemoPack, mode: str) -> list[tuple[str, str]]:
+    book = playbook_for_mode(pack, mode)
+    return [(s["name"], s["id"]) for s in book.get("scenarios", [])]
+
+
+def get_playbook_scenario(pack: DemoPack, mode: str, scenario_id: str) -> dict | None:
+    for scenario in playbook_for_mode(pack, mode).get("scenarios", []):
+        if scenario["id"] == scenario_id:
+            return scenario
+    return None
+
+
+def nexa_summary_markdown(pack: DemoPack) -> str:
+    org = pack.agent_profile.get("organization", "NexaCorp")
+    role = pack.agent_profile.get("role", "IT support assistant")
+    return (
+        f"### {pack.display_name}\n"
+        f"**{org}** — {role}\n\n"
+        "Nexa Copilot conoce políticas, tickets y credenciales break-glass **simuladas**. "
+        "Prueba un flujo normal o un ataque gradual; el panel muestra cómo MTGuard detecta "
+        "el acercamiento antes del exfil."
+    )
