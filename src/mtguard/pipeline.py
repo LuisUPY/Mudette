@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import time
 from pathlib import Path
 
@@ -9,7 +8,8 @@ from mtguard.gates.user_gate import UserGate
 from mtguard.layers.fusion import RiskFusion
 from mtguard.layers.l1_regex import RegexGuard
 from mtguard.layers.l2_trajectory import ConversationState, TrajectoryGuard
-from mtguard.models import FusionResult, JudgeResult, TurnTrace, Verdict
+from mtguard.models import FusionResult, JudgeResult, TurnTrace
+from mtguard.pack_loader import DemoPack
 from mtguard.trace import build_turn_trace
 
 
@@ -30,12 +30,11 @@ class MTGuardPipeline:
 
     @classmethod
     def from_pack(cls, pack_dir: Path, embedder: Embedder | None = None) -> MTGuardPipeline:
+        pack = DemoPack.load(pack_dir)
         embedder = embedder or Embedder()
-        profile_path = pack_dir / "agent_profile.json"
-        profile = json.loads(profile_path.read_text(encoding="utf-8"))
         return cls(
             l1=RegexGuard(),
-            l2=TrajectoryGuard(profile, embedder=embedder),
+            l2=TrajectoryGuard(pack.agent_profile, embedder=embedder),
         )
 
     def process_turn(
