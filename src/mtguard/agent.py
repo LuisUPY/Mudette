@@ -9,6 +9,7 @@ from mtguard.gates.user_gate import UserGate
 from mtguard.layers.fusion import RiskFusion
 from mtguard.layers.l1_regex import RegexGuard
 from mtguard.layers.l2_trajectory import TrajectoryGuard
+from mtguard.judge import DEFAULT_JUDGE_MODEL, EscalationJudge
 from mtguard.models import FusionResult, GateResult, JudgeResult, TurnTrace
 from mtguard.pack_loader import DemoPack
 from mtguard.pipeline import MTGuardPipeline
@@ -29,6 +30,7 @@ _SECRET_PATTERNS = (
     r"whsec_nexa_sim",
     r"it-admins@nexacorp\.internal",
 )
+DEFAULT_MAIN_MODEL = "gpt-4o"
 
 
 @dataclass
@@ -41,19 +43,32 @@ class AgentTurn:
 
 @dataclass
 class NexaAgent:
-    """Nexa Copilot — offline RAG-backed responses when gate allows."""
+    """Nexa Copilot — offline RAG or online LLM when main API key is set."""
 
     pack: DemoPack
     kb: KnowledgeBase
+    main_api_key: str | None = None
+    main_model: str = DEFAULT_MAIN_MODEL
     system_prompt: str = field(init=False)
 
     def __post_init__(self) -> None:
         self.system_prompt = self.pack.system_prompt
 
     @classmethod
-    def from_pack(cls, pack: DemoPack, embedder: Embedder | None = None) -> NexaAgent:
+    def from_pack(
+        cls,
+        pack: DemoPack,
+        embedder: Embedder | None = None,
+        main_api_key: str | None = None,
+        main_model: str = DEFAULT_MAIN_MODEL,
+    ) -> NexaAgent:
         embedder = embedder or Embedder()
-        return cls(pack=pack, kb=KnowledgeBase.from_pack_dir(pack.pack_dir, embedder=embedder))
+        return cls(
+            pack=pack,
+            kb=KnowledgeBase.from_pack_dir(pack.pack_dir, embedder=embedder),
+            main_api_key=main_api_key or None,
+            main_model=main_model,
+        )
 
     def respond(
         self,
@@ -64,10 +79,39 @@ class NexaAgent:
         if not gate.allow_llm:
             return _BLOCK_MESSAGE
 
-        body = self._compose_offline(message)
+        if self.main_api_key:
+            body = self._compose_online(message)
+        else:
+            body = self._compose_offline(message)
+
         if gate.show_banner:
             body = _ALERT_BANNER + body
         return self._scrub_secrets(body)
+
+    def _compose_online(self, message: str) -> str:
+        chunks = self.kb.search(message, top_k=3)
+        context = "\n\n---\n\n".join(c.text for c in chunks) if chunks else ""
+        rag_block = f"Knowledge base excerpts:\n{context}\n\n" if context else ""
+        user_content = f"{rag_block}Employee question:\n{message}"
+        try:
+            return self._call_main_llm(user_content)
+        except Exception:  # noqa: BLE001
+            return self._compose_offline(message)
+
+    def _call_main_llm(self, user_content: str) -> str:
+        from openai import OpenAI
+
+        client = OpenAI(api_key=self.main_api_key)
+        response = client.chat.completions.create(
+            model=self.main_model,
+            messages=[
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            max_tokens=500,
+            temperature=0.3,
+        )
+        return (response.choices[0].message.content or _FALLBACK).strip()
 
     def _compose_offline(self, message: str) -> str:
         chunks = self.kb.search(message, top_k=3)
@@ -121,7 +165,7 @@ class NexaAgent:
 
 
 class MTGuardSession:
-    """Full stack: defense pipeline + offline Nexa agent."""
+    """Full stack: defense pipeline + Nexa agent + optional EscalationJudge."""
 
     def __init__(
         self,
@@ -129,17 +173,54 @@ class MTGuardSession:
         embedder: Embedder | None = None,
         pipeline: MTGuardPipeline | None = None,
         agent: NexaAgent | None = None,
+        judge: EscalationJudge | None = None,
+        main_api_key: str | None = None,
+        judge_api_key: str | None = None,
+        judge_enabled: bool = False,
+        main_model: str = DEFAULT_MAIN_MODEL,
+        judge_model: str = DEFAULT_JUDGE_MODEL,
     ) -> None:
         self.pack = pack
         self.embedder = embedder or Embedder()
         self.pipeline = pipeline or self._build_pipeline()
-        self.agent = agent or NexaAgent.from_pack(pack, self.embedder)
+        self.agent = agent or NexaAgent.from_pack(
+            pack,
+            self.embedder,
+            main_api_key=main_api_key,
+            main_model=main_model,
+        )
+        if judge is not None:
+            self.judge = judge
+        elif judge_enabled and judge_api_key:
+            self.judge = EscalationJudge(
+                pack=pack,
+                api_key=judge_api_key,
+                model=judge_model,
+                enabled=True,
+            )
+        else:
+            self.judge = None
         self.state = self.pipeline.reset()
 
     @classmethod
-    def from_pack_dir(cls, pack_dir: Path | str) -> MTGuardSession:
+    def from_pack_dir(
+        cls,
+        pack_dir: Path | str,
+        main_api_key: str | None = None,
+        judge_api_key: str | None = None,
+        judge_enabled: bool = False,
+        main_model: str = DEFAULT_MAIN_MODEL,
+        judge_model: str = DEFAULT_JUDGE_MODEL,
+    ) -> MTGuardSession:
         pack = DemoPack.load(Path(pack_dir))
-        return cls(pack)
+        return cls(
+            pack,
+            main_api_key=main_api_key,
+            judge_api_key=judge_api_key,
+            judge_enabled=judge_enabled,
+            main_model=main_model,
+            judge_model=judge_model,
+        )
 
     def _build_pipeline(self) -> MTGuardPipeline:
         return MTGuardPipeline(
@@ -152,8 +233,13 @@ class MTGuardSession:
     def reset(self) -> None:
         self.state = self.pipeline.reset()
 
-    def turn(self, message: str, judge: JudgeResult | None = None) -> AgentTurn:
-        trace, self.state, fusion = self.pipeline.process_turn(message, self.state, judge)
+    def turn(self, message: str, judge_override: JudgeResult | None = None) -> AgentTurn:
+        trace, self.state, fusion = self.pipeline.process_turn(
+            message,
+            self.state,
+            judge=judge_override,
+            auto_judge=self.judge,
+        )
         gate = GateResult(
             allow_llm=trace.gate["allow_llm"],  # type: ignore[index]
             show_banner=trace.gate["show_banner"],  # type: ignore[index]

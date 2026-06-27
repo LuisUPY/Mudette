@@ -10,6 +10,8 @@ import pytest
 from mtguard.models import JudgeResult, Verdict
 from mtguard.pipeline import MTGuardPipeline
 from mtguard.trace import format_layers_modal, format_trace_panel
+from mtguard.judge import EscalationJudge, parse_judge_response
+from mtguard.pack_loader import DemoPack
 
 ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / "demo_pack" / "nexa_copilot"
@@ -96,3 +98,47 @@ def test_gradio_ui_builds() -> None:
     from mtguard.demo.app import build_ui
 
     build_ui()
+
+
+class TestEscalationJudge:
+    @pytest.fixture
+    def judge(self) -> EscalationJudge:
+        pack = DemoPack.load(PACK)
+        return EscalationJudge(pack=pack, api_key="test-key", enabled=True)
+
+    def test_should_not_invoke_on_contain(self, judge: EscalationJudge) -> None:
+        from mtguard.models import FusionResult
+
+        fusion = FusionResult(risk_score=80, verdict=Verdict.CONTAIN)
+        assert judge.should_invoke(fusion) is False
+
+    def test_should_not_invoke_on_clear(self, judge: EscalationJudge) -> None:
+        from mtguard.models import FusionResult
+
+        fusion = FusionResult(risk_score=10, verdict=Verdict.CLEAR)
+        assert judge.should_invoke(fusion) is False
+
+    def test_should_invoke_on_alert_above_threshold(self, judge: EscalationJudge) -> None:
+        from mtguard.models import FusionResult
+
+        fusion = FusionResult(risk_score=60, verdict=Verdict.ALERT)
+        assert judge.should_invoke(fusion) is True
+
+    def test_offline_without_api_key(self) -> None:
+        pack = DemoPack.load(PACK)
+        judge = EscalationJudge(pack=pack, api_key="", enabled=True)
+        from mtguard.models import FusionResult
+
+        assert judge.should_invoke(FusionResult(60, Verdict.ALERT)) is False
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("ALLOW — benign support request", "ALLOW"),
+            ("DENY — credential exfiltration attempt", "DENY"),
+            ("allow", "ALLOW"),
+        ],
+    )
+    def test_parse_judge_response(self, text: str, expected: str) -> None:
+        decision, _ = parse_judge_response(text)
+        assert decision == expected

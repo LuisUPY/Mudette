@@ -109,6 +109,11 @@ def format_trace_panel(trace: dict[str, Any] | None) -> str:
     factors = fusion.get("factors") or []
     if factors:
         lines.append(f"**Factors:** {', '.join(factors)}")
+    judge = trace.get("judge")
+    if judge and judge.get("invoked"):
+        lines.append(
+            f"**Judge** — {judge.get('decision')} · {judge.get('reason', '')}"
+        )
     return "\n".join(lines)
 
 

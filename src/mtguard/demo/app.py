@@ -23,7 +23,8 @@ DEFAULT_PACK = DemoPack.load(PACK_DIR)
 @dataclass
 class AppSession:
     mtguard: MTGuardSession
-    api_key: str = ""
+    main_api_key: str = ""
+    judge_api_key: str = ""
     judge_enabled: bool = False
     mode: str = "benign"
     playbook_id: str | None = None
@@ -42,28 +43,49 @@ def _playbook_dropdown_update(mode_label: str) -> gr.Dropdown:
     return gr.Dropdown(choices=choices, value=choices[0][1] if choices else None)
 
 
+def _session_status(main_key: str, judge_key: str, judge_on: bool) -> str:
+    parts = []
+    parts.append(
+        f"**Agente:** {'online (GPT)' if main_key.strip() else 'offline (RAG)'}"
+    )
+    if judge_on:
+        if judge_key.strip():
+            parts.append("**Juez:** habilitado · modelo ligero (`gpt-4o-mini`)")
+        else:
+            parts.append("**Juez:** requiere API key del juez (separada del agente)")
+    else:
+        parts.append("**Juez:** desactivado")
+    return " · ".join(parts)
+
+
 def start_session(
-    api_key: str,
+    main_api_key: str,
+    judge_api_key: str,
     mode_label: str,
     judge_enabled: bool,
 ) -> tuple[AppSession, str, gr.update, gr.update, list, str, str, gr.update]:
     mode = _mode_from_radio(mode_label)
+    main_key = (main_api_key or "").strip()
+    judge_key = (judge_api_key or "").strip()
+    judge_on = judge_enabled and bool(judge_key)
+
     session = AppSession(
-        mtguard=MTGuardSession.from_pack_dir(PACK_DIR),
-        api_key=api_key or "",
-        judge_enabled=judge_enabled and bool(api_key),
+        mtguard=MTGuardSession.from_pack_dir(
+            PACK_DIR,
+            main_api_key=main_key or None,
+            judge_api_key=judge_key or None,
+            judge_enabled=judge_on,
+        ),
+        main_api_key=main_key,
+        judge_api_key=judge_key,
+        judge_enabled=judge_on,
         mode=mode,
     )
     choices = playbook_choices(DEFAULT_PACK, mode)
     playbook_val = choices[0][1] if choices else None
-    judge_note = (
-        "Juez habilitado (requiere API key en Fase 6)."
-        if session.judge_enabled
-        else "Juez desactivado — modo offline."
-    )
     return (
         session,
-        judge_note,
+        _session_status(main_key, judge_key, judge_enabled),
         gr.update(visible=False),
         gr.update(visible=True),
         [],
@@ -146,23 +168,31 @@ def build_ui() -> gr.Blocks:
 
         with gr.Row(visible=True) as setup_row:
             with gr.Column(scale=1):
-                api_key = gr.Textbox(
-                    label="OpenAI API Key (solo RAM, opcional)",
+                main_api_key = gr.Textbox(
+                    label="API Key — Agente principal (Nexa Copilot)",
                     type="password",
-                    placeholder="sk-…",
+                    placeholder="sk-… (modelo principal, ej. gpt-4o)",
+                )
+                judge_api_key = gr.Textbox(
+                    label="API Key — Juez (EscalationJudge)",
+                    type="password",
+                    placeholder="sk-… (modelo ligero, ej. gpt-4o-mini)",
                 )
                 mode = gr.Radio(
                     ["Modo Usuario (benigno)", "Modo Red Team"],
                     value="Modo Usuario (benigno)",
                     label="Modo",
                 )
-                judge_toggle = gr.Checkbox(label="Habilitar Juez (EscalationJudge)", value=False)
+                judge_toggle = gr.Checkbox(
+                    label="Habilitar Juez (solo con API key del juez)",
+                    value=False,
+                )
                 start_btn = gr.Button("Iniciar sesión", variant="primary")
             with gr.Column(scale=1):
                 gr.Markdown(
-                    "1. Opcional: API key para juez/LLM online (Fase 6).\n"
-                    "2. Elige modo y pulsa **Iniciar**.\n"
-                    "3. Chatea o usa playbooks."
+                    "1. **Agente** y **Juez** usan API keys **separadas** (solo RAM).\n"
+                    "2. Sin key del agente → respuestas offline vía RAG.\n"
+                    "3. El juez usa un modelo más ligero y solo actúa en WATCH/ALERT con risk≥55."
                 )
 
         judge_status = gr.Markdown("")
@@ -181,7 +211,6 @@ def build_ui() -> gr.Blocks:
 
             with gr.Column(scale=2):
                 trace_panel = gr.Markdown("*Esperando primer mensaje…*")
-                trace_json = gr.JSON(label="TurnTrace JSON", visible=False)
                 layers_btn = gr.Button("Ver capas")
                 with gr.Column(visible=False) as layers_box:
                     gr.Markdown("### Capas de defensa MTGuard")
@@ -198,7 +227,7 @@ def build_ui() -> gr.Blocks:
 
         start_btn.click(
             start_session,
-            inputs=[api_key, mode, judge_toggle],
+            inputs=[main_api_key, judge_api_key, mode, judge_toggle],
             outputs=[app_state, judge_status, setup_row, main_row, chatbot, trace_panel, layers_md, playbook_dd],
         )
 

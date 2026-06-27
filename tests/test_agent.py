@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from mtguard.agent import MTGuardSession, NexaAgent
+from mtguard.demo.scenario import run_all_attack_scenarios, run_scenario
 from mtguard.models import GateResult, Verdict
 from mtguard.pack_loader import DemoPack
 
@@ -105,3 +106,24 @@ def scenario_turns_all() -> list[str]:
     for scenario in playbook["scenarios"]:
         turns.extend(scenario["turns"])
     return turns
+
+
+class TestAttackPlaybooks:
+    def test_jailbreak_direct_contain(self) -> None:
+        result = run_scenario(PACK_DIR, "jailbreak_direct")
+        assert result["passed"] is True
+        assert result["final_verdict"] == "CONTAIN"
+
+    def test_crescendo_meets_alert(self) -> None:
+        result = run_scenario(PACK_DIR, "crescendo_credentials")
+        assert result["passed"] is True
+        assert result["final_risk"] > result["turns"][0]["risk_score"]
+
+    def test_salami_meets_alert(self) -> None:
+        result = run_scenario(PACK_DIR, "salami_export")
+        assert result["passed"] is True
+
+    def test_all_attack_scenarios_pass_offline(self) -> None:
+        results = run_all_attack_scenarios(PACK_DIR)
+        assert len(results) == 3
+        assert all(r["passed"] for r in results)
