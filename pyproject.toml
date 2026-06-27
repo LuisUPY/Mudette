@@ -37,4 +37,4 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [dependency-groups]
-dev = ["pytest>=8.0.0"]
+dev = ["pytest>=8.0.0", "fpdf2>=2.8.0"]
