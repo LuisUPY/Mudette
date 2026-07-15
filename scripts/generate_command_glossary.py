@@ -36,7 +36,7 @@ CATALOG: list[tuple[str, tuple[int, int, int], list[dict[str, str]]]] = [
                 "title": "setup.sh",
                 "subtitle": "Instalar dependencias",
                 "run": "./scripts/setup.sh",
-                "desc": "Descarga e instala Python, librerías (Gradio, FAISS, OpenAI) y herramientas de desarrollo con uv.",
+                "desc": "Descarga e instala Python, librerías (Gradio, FAISS, cliente OpenAI para NVIDIA NIM) y herramientas de desarrollo con uv.",
                 "keys": "No requiere API keys",
                 "when": "Primera vez que clonas el repo o tras cambiar pyproject.toml",
             },
@@ -60,7 +60,7 @@ CATALOG: list[tuple[str, tuple[int, int, int], list[dict[str, str]]]] = [
                 "run": "./scripts/run-demo.sh",
                 "alt": "uv run Mudette-demo",
                 "desc": "Inicia Gradio en http://localhost:7860. Chat con Nexa Copilot, panel TurnTrace, playbooks y capas L1→L2→Fusion.",
-                "keys": "Opcional: API key agente (gpt-4o) + API key juez (gpt-4o-mini), separadas",
+                "keys": "Obligatoria: NVIDIA API key del agente (nvapi-…, llama-3.1-8b). Opcional: key del juez, separada",
                 "when": "Probar la demo interactiva con modo benigno o red team",
             },
         ],
@@ -74,7 +74,7 @@ CATALOG: list[tuple[str, tuple[int, int, int], list[dict[str, str]]]] = [
                 "subtitle": "Suite completa pytest",
                 "run": "./scripts/run-tests.sh",
                 "alt": "uv run pytest -v",
-                "desc": "Ejecuta todos los tests offline: L1, L2, fusion, RAG, agente, playbooks y UI.",
+                "desc": "Ejecuta todos los tests con NIM mockeado: L1, L2, fusion, RAG, agente, streaming, playbooks y UI.",
                 "keys": "No requiere API keys",
                 "when": "Antes de commit/PR o para validar el repo",
             },
@@ -97,25 +97,25 @@ CATALOG: list[tuple[str, tuple[int, int, int], list[dict[str, str]]]] = [
                 "subtitle": "Benchmarks por defecto (sin juez)",
                 "run": "./scripts/run-benchmarks.sh",
                 "desc": "Alias de run-benchmarks-no-judge.sh. Ejecuta los 3 escenarios de ataque y comprueba expect_min_verdict.",
-                "keys": "No requiere API keys",
-                "when": "Medir defensa MTGuard offline (crescendo, salami, jailbreak)",
+                "keys": "Obligatoria: MAIN_API_KEY (nvapi-…)",
+                "when": "Medir defensa MTGuard end-to-end (crescendo, salami, jailbreak)",
             },
             {
                 "title": "run-benchmarks-no-judge.sh",
                 "subtitle": "Benchmarks sin EscalationJudge",
                 "run": "./scripts/run-benchmarks-no-judge.sh",
                 "alt": "uv run Mudette-scenario --all",
-                "desc": "Pipeline L1→L2→Fusion→UserGate solamente. Rápido y reproducible sin llamadas OpenAI.",
-                "keys": "No requiere API keys",
+                "desc": "Guardas L1→L2→Fusion→UserGate + agente NVIDIA NIM real, sin EscalationJudge.",
+                "keys": "Obligatoria: MAIN_API_KEY (nvapi-…)",
                 "when": "CI, regresiones de risk_score y veredictos",
             },
             {
                 "title": "run-benchmarks-with-judge.sh",
                 "subtitle": "Benchmarks con juez online",
-                "run": "export JUDGE_API_KEY='sk-…'\n./scripts/run-benchmarks-with-judge.sh",
+                "run": "export MAIN_API_KEY='nvapi-…'\nexport JUDGE_API_KEY='nvapi-…'\n./scripts/run-benchmarks-with-judge.sh",
                 "alt": "uv run Mudette-scenario --all --judge --judge-api-key $JUDGE_API_KEY",
-                "desc": "Igual que los benchmarks pero activa EscalationJudge (modelo ligero) en turnos WATCH/ALERT con risk≥55.",
-                "keys": "Obligatorio: JUDGE_API_KEY. Opcional: MAIN_API_KEY",
+                "desc": "Igual que los benchmarks pero activa EscalationJudge (llama-3.1-8b) en turnos WATCH/ALERT con risk≥55.",
+                "keys": "Obligatorias: MAIN_API_KEY y JUDGE_API_KEY (nvapi-…)",
                 "when": "Probar capa de juez con sesgo ALLOW y DENY→CONTAIN",
             },
             {
@@ -124,7 +124,7 @@ CATALOG: list[tuple[str, tuple[int, int, int], list[dict[str, str]]]] = [
                 "run": "./scripts/run-scenario.sh crescendo_credentials",
                 "alt": "uv run Mudette-scenario --scenario jailbreak_direct",
                 "desc": "Ejecuta un playbook concreto y muestra risk_score por turno.",
-                "keys": "No requiere API keys (salvo flags --judge)",
+                "keys": "Obligatoria: MAIN_API_KEY (nvapi-…). Con --judge, además JUDGE_API_KEY",
                 "when": "Depurar un ataque específico",
             },
         ],
@@ -149,7 +149,7 @@ CLI_COMMANDS = [
     ("Mudette-demo", "Demo web Gradio (:7860)", "uv run Mudette-demo"),
     ("Mudette-scenario --all", "Todos los benchmarks de ataque", "uv run Mudette-scenario --all"),
     ("Mudette-scenario --scenario ID", "Un escenario", "uv run Mudette-scenario --scenario crescendo_credentials"),
-    ("pytest", "Tests offline", "uv run pytest -v"),
+    ("pytest", "Tests (NIM mockeado)", "uv run pytest -v"),
     ("build_kb.py", "Índice FAISS", "uv run python scripts/build_kb.py"),
 ]
 
@@ -199,8 +199,8 @@ def cover_page(pdf: GlossaryPDF) -> None:
         0,
         7,
         "Referencia visual para ejecutar la demo, tests y benchmarks.\n"
-        "Los benchmarks sin juez son offline (sin API keys).\n"
-        "Agente y juez usan API keys separadas cuando estan online.",
+        "Demo y benchmarks requieren NVIDIA API key (nvapi-…); los tests usan NIM mockeado.\n"
+        "Agente y juez usan API keys separadas.",
         align="C",
     )
     pdf.ln(30)
