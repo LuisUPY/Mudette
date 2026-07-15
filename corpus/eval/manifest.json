@@ -24,11 +24,44 @@
    "description": "playbooks demo multi-turn (attack/benign_playbook.json)",
    "license": "self-authored",
    "split": "dev"
+  },
+  "jbb": {
+   "dataset": "JailbreakBench/JBB-Behaviors",
+   "revision": "886acc352a31533ffbcf4ef22c744658688086fc",
+   "take": 40,
+   "hash_only": false,
+   "imported": "2026-07-15",
+   "split": "test"
+  },
+  "safemt": {
+   "dataset": "SafeMTData/SafeMTData",
+   "revision": "04af7bd0b6b6044e797e936d79674e348316b9b8",
+   "take": 30,
+   "hash_only": false,
+   "imported": "2026-07-15",
+   "split": "test"
+  },
+  "mhj": {
+   "dataset": "ScaleAI/mhj",
+   "revision": "ad6e928f5c2823f53fbb828f6d60dd4137fd43e7",
+   "take": 40,
+   "hash_only": false,
+   "imported": "2026-07-15",
+   "split": "test"
+  },
+  "domain_gen": {
+   "description": "domain attacks (crescendo/salami/jailbreak/social_engineering) targeting Nexa Copilot",
+   "license": "self-authored",
+   "generator": "Claude subagent, blind to detector internals (rules/thresholds/seed_phrases/judge_prompt/vault); prompt archived in domain_gen_prompt.md",
+   "split": "dev+test",
+   "n_dev": 15,
+   "n_test": 15,
+   "imported": "2026-07-15"
   }
  },
  "test_freeze": null,
  "sha256": {
-  "attacks_dev.json": "066bd80adef2c9982cd072c702b4eeca430c4fb156e19c61b9a6518e6568ed23",
+  "attacks_dev.json": "f3d2ca78131c6568ed15627844b426022e0a5611ed7170c42b1749dc034d9193",
   "benign_dev.json": "35660747f66735c17e2c39f60bc6325ad236a2aa20976e2f2a5e631e46a66e96"
  }
 }

@@ -42,6 +42,15 @@ def _require_datasets():
         raise SystemExit(2)
 
 
+def _resolve_commit_sha(dataset_name: str) -> str:
+    """Real HF commit SHA of the dataset repo (not the declared dataset `version`,
+    which is often 0.0.0). Pinning this into the manifest — and loading against it —
+    makes the frozen test set reproducible, which the anti-circularity protocol requires."""
+    from huggingface_hub import HfApi
+
+    return HfApi().dataset_info(dataset_name).sha
+
+
 def _extract_turns(row: dict, candidates: tuple[str, ...]) -> list[str] | None:
     """Defensive multi-schema extraction: returns user-turn texts or None."""
     for col in candidates:
@@ -63,8 +72,9 @@ def _extract_turns(row: dict, candidates: tuple[str, ...]) -> list[str] | None:
 
 def import_jbb(take: int) -> tuple[list[dict], str, str]:
     datasets = _require_datasets()
-    ds = datasets.load_dataset("JailbreakBench/JBB-Behaviors", "behaviors")
-    revision = str(getattr(ds["harmful"], "version", "") or "unpinned")
+    name = "JailbreakBench/JBB-Behaviors"
+    revision = _resolve_commit_sha(name)
+    ds = datasets.load_dataset(name, "behaviors", revision=revision)
     rows = list(ds["harmful"])[:take]
     scenarios = []
     for i, row in enumerate(rows):
@@ -76,32 +86,57 @@ def import_jbb(take: int) -> tuple[list[dict], str, str]:
             "category": "jailbreak", "label": "attack", "turns": turns,
             "notes": f"JBB behavior: {row.get('Behavior', '')}"[:120],
         })
-    return scenarios, "JailbreakBench/JBB-Behaviors", revision
+    return scenarios, name, revision
+
+
+def _mhj_user_turns(row: dict) -> list[str]:
+    """MHJ schema: flat message_0..message_N columns, each a JSON string
+    {"body": ..., "role": "system"|"user"|"assistant"}. Not a single list/column,
+    so the generic _extract_turns candidates don't match — needs its own parse."""
+    turns = []
+    i = 0
+    while True:
+        raw = row.get(f"message_{i}")
+        if raw is None:
+            break
+        try:
+            msg = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            i += 1
+            continue
+        if msg.get("role") == "user":
+            body = str(msg.get("body", "")).strip()
+            if body:
+                turns.append(body)
+        i += 1
+    return turns
 
 
 def import_mhj(take: int) -> tuple[list[dict], str, str]:
     datasets = _require_datasets()
-    ds = datasets.load_dataset("ScaleAI/mhj")  # gated: needs HF_TOKEN + license accept on HF
+    name = "ScaleAI/mhj"  # gated: needs HF_TOKEN + license accept on HF
+    revision = _resolve_commit_sha(name)
+    ds = datasets.load_dataset(name, revision=revision)
     split = ds[next(iter(ds))]
-    revision = str(getattr(split, "version", "") or "unpinned")
     scenarios = []
     for i, row in enumerate(list(split)[:take]):
-        turns = _extract_turns(row, ("messages", "message", "questions", "turns", "conversation"))
+        turns = _mhj_user_turns(row)
         if not turns:
-            raise ValueError(f"mhj row {i}: no turns found; columns={list(row)}")
+            raise ValueError(f"mhj row {i}: no user turns found; columns={list(row)}")
         scenarios.append({
             "id": f"mhj_{i:04d}", "source": "mhj", "license": "verify-on-HF-card",
             "category": "crescendo" if len(turns) > 1 else "jailbreak", "label": "attack",
             "turns": turns, "notes": f"tactic: {row.get('tactic', row.get('Tactic', ''))}"[:120],
         })
-    return scenarios, "ScaleAI/mhj", revision
+    return scenarios, name, revision
 
 
 def import_safemt(take: int) -> tuple[list[dict], str, str]:
     datasets = _require_datasets()
-    ds = datasets.load_dataset("SafeMTData/SafeMTData", "Attack_600")
+    name = "SafeMTData/SafeMTData"
+    revision = _resolve_commit_sha(name)
+    ds = datasets.load_dataset(name, "Attack_600", revision=revision)
     split = ds[next(iter(ds))]
-    revision = str(getattr(split, "version", "") or "unpinned")
     scenarios = []
     for i, row in enumerate(list(split)[:take]):
         turns = _extract_turns(row, ("multi_turn_queries", "queries", "turns", "conversations"))
@@ -112,7 +147,7 @@ def import_safemt(take: int) -> tuple[list[dict], str, str]:
             "category": "crescendo", "label": "attack", "turns": turns,
             "notes": "ActorAttack multi-turn decomposition",
         })
-    return scenarios, "SafeMTData/SafeMTData", revision
+    return scenarios, name, revision
 
 
 IMPORTERS = {"jbb": import_jbb, "mhj": import_mhj, "safemt": import_safemt}
