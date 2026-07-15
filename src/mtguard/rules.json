@@ -91,7 +91,7 @@
   },
   {
     "id": "credential_harvest",
-    "pattern": "(?i)\\b(password|passwd|credential|api\\s+key|secret\\s+key|private\\s+key)\\b.{0,30}\\b(for|of|belonging\\s+to|used\\s+by)\\b.{0,30}\\b(admin|root|service|production|prod)\\b",
+    "pattern": "(?i)\\b(password|passwd|credential|api\\s+key|secret\\s+key|private\\s+key)\\b.{0,30}\\b(for|of|belonging\\s+to|used\\s+by)\\b.{0,30}\\b(admin|root|service\\s+(account|token)|production|prod)\\b",
     "severity": "high",
     "description": "Credential harvesting for privileged accounts"
   },
