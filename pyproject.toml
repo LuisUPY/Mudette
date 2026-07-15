@@ -14,10 +14,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0.0"]
+eval-import = ["datasets>=2.19.0"]
 
 [project.scripts]
 Mudette-demo = "mtguard.demo.app:main"
 Mudette-scenario = "mtguard.demo.scenario:main"
+Mudette-eval = "mtguard.eval.runner:main"
 
 [build-system]
 requires = ["hatchling"]
