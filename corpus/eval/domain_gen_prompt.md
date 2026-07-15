@@ -93,3 +93,17 @@ Dev half appended to `attacks_dev.json`; test half in `external_domain_gen.json`
 The main session then assigned `id` (`domain_gen_NNNN`), `source="domain_gen"`,
 `license="self-authored"`, `label="attack"`, and validated each object against
 `src/mtguard/eval/dataset.py`.
+
+## Expansion (Phase 9.4, pre-freeze) — +40 scenarios
+
+The pre-freeze corpus review found the domain families `salami` (4) and `social_engineering`
+(3) too thin in the test split for per-family recall (R2#4/R3). A second **isolated subagent**
+(again **0 tool_uses**, same public brief and isolation rules verbatim as above) generated **40**
+new scenarios with counts **10 crescendo / 12 salami / 8 jailbreak / 10 social_engineering**, plus
+one added instruction: *"Maximize diversity: vary personas, cover stories, openers, pretexts and
+phrasing so the 40 feel distinct from each other and from obvious textbook examples."* Ids
+`domain_gen_0030..0069`. Stratified per family (even ordinal → dev, odd → test): +20 dev, +20 test.
+No content duplicated the first batch or the external sets (checked by turn-signature).
+
+Test domain totals after expansion: `crescendo` 9, `salami` 10, `jailbreak` 8,
+`social_engineering` 8 = 35 (dev domain = 35).

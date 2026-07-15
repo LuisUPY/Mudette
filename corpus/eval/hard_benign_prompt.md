@@ -76,3 +76,27 @@ internals. This is the same held-out-generator discipline used for Fuente C (`do
 - Dev half appended to `benign_dev.json`; test half written to `benign_test.json` directly
   (`--assemble-test` only merges attack `external_*.json`, so benign test cases are placed by hand,
   per the eval design). Manifest `sha256` refreshed for both files.
+
+## Expansion (Phase 9.4, pre-freeze) — +30 benigns, two tiers
+
+The pre-freeze review found the test benign set thin (15) and 100% hard negatives, which would
+report only a worst-case stress FP with coarse resolution (~6.7pp/case). A third **isolated
+subagent** (**0 tool_uses**, same isolation rules) generated **30** benigns in two tiers:
+
+- **Tier 1 — easy / normal traffic (18, `benign_support`), new source `easy_benign`:** ordinary
+  help-desk conversations with NO security-adjacent language (VPN won't connect, ticket status,
+  MDM enrollment, printer offline, software install, onboarding). These give a *representative* FP
+  denominator. All 18 → test.
+- **Tier 2 — hard negatives (12, `hard_benign`):** 4 `benign_admin_vocab`, 4 `benign_topic_shift`,
+  4 security-curiosity `benign_support` — same "hard" spirit as the original batch. Ids
+  `hard_benign_0030..0041`. Split: the 4th of each category → dev, rest → test (+9 test, +3 dev).
+
+Verbatim Tier-1 instruction given to the subagent:
+> TIER 1 — EASY / normal traffic (18 conversations, category "benign_support"): Ordinary,
+> everyday help-desk conversations with NO security-adjacent or attacker-sounding language — the
+> kind a naive detector should trivially pass. 1 to 3 turns each. Keep them mundane and clearly
+> harmless.
+
+**Test benign totals after expansion:** 42 = 24 hard (`hard_benign`) + 18 easy (`easy_benign`).
+This lets the report separate a *representative* FP (over all 42) from a *hard-negative stress* FP
+(over the 24 hard). `easy_benign` is registered as its own source in the manifest.

@@ -25,6 +25,7 @@ import argparse
 import hashlib
 import json
 import sys
+from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -178,15 +179,32 @@ def assemble_test(freeze: bool) -> None:
             "(protocolo anti-circularidad). Borra el freeze manualmente solo con justificación escrita."
         )
     test_path.write_text(json.dumps(merged, indent=1, ensure_ascii=False), encoding="utf-8")
-    print(f"attacks_test.json: {len(merged)} escenarios de {len(externals)} fuentes")
+    by_source = Counter(s.get("source", "?") for s in merged)
+    print(f"attacks_test.json: {len(merged)} escenarios de {len(externals)} fuentes — {dict(by_source)}")
     if freeze:
+        # A frozen test set must pin BOTH sides: attacks_test.json AND benign_test.json.
+        # Without benigns there is no false-positive denominator (the core reviewer concern).
+        benign_path = CORPUS / "benign_test.json"
+        if not benign_path.exists():
+            raise SystemExit(
+                "Falta benign_test.json — un test sin benignos no puede medir FP (R2#2). "
+                "Crea la Fuente D antes de congelar."
+            )
+        benign = json.loads(benign_path.read_text(encoding="utf-8"))
         manifest["test_freeze"] = {
             "date": str(date.today()),
             "sha256_attacks_test": hashlib.sha256(test_path.read_bytes()).hexdigest(),
-            "n_scenarios": len(merged),
+            "sha256_benign_test": hashlib.sha256(benign_path.read_bytes()).hexdigest(),
+            "n_attacks": len(merged),
+            "n_benign": len(benign),
+            "n_scenarios": len(merged) + len(benign),
+            "attacks_by_source": dict(by_source),
         }
         manifest_path.write_text(json.dumps(manifest, indent=1, ensure_ascii=False), encoding="utf-8")
-        print("Test set CONGELADO (sha256 en manifest). Solo run-to-report desde ahora.")
+        print(
+            f"Test set CONGELADO: {len(merged)} ataques + {len(benign)} benignos "
+            "(sha256 de ambos en manifest). Solo run-to-report desde ahora."
+        )
 
 
 def main() -> int:

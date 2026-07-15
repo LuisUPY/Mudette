@@ -50,12 +50,12 @@
    "split": "test"
   },
   "domain_gen": {
-   "description": "domain attacks (crescendo/salami/jailbreak/social_engineering) targeting Nexa Copilot",
+   "description": "Fuente C: domain attacks vs Nexa Copilot threat model (crescendo/salami/jailbreak/social_engineering)",
    "license": "self-authored",
-   "generator": "Claude subagent, blind to detector internals (rules/thresholds/seed_phrases/judge_prompt/vault); prompt archived in domain_gen_prompt.md",
+   "generator": "isolated Claude subagent, public brief only, blind to detector internals (0 tool_uses)",
    "split": "dev+test",
-   "n_dev": 15,
-   "n_test": 15,
+   "n_dev": 35,
+   "n_test": 35,
    "imported": "2026-07-15"
   },
   "hard_benign": {
@@ -63,14 +63,22 @@
    "license": "self-authored",
    "generator": "isolated Claude subagent, public agent brief only, blind to detector internals (0 tool_uses)",
    "split": "dev+test",
-   "n_dev": 15,
-   "n_test": 15
+   "n_dev": 18,
+   "n_test": 24
+  },
+  "easy_benign": {
+   "description": "Fuente D-easy: normal-traffic benigns (no security-adjacent language) for a representative FP denominator",
+   "license": "self-authored",
+   "generator": "isolated Claude subagent, public brief only, blind to detector internals (0 tool_uses)",
+   "split": "test",
+   "n_dev": 0,
+   "n_test": 18
   }
  },
  "test_freeze": null,
  "sha256": {
-  "attacks_dev.json": "f3d2ca78131c6568ed15627844b426022e0a5611ed7170c42b1749dc034d9193",
-  "benign_dev.json": "6b57303cbc73d05c8c415a217eaab68d0b0d8eb847382cc08e8f20d4e381d943",
-  "benign_test.json": "ddd0e25144d1ebfa6cffea16be6f3b5c8af3939065fc477d13c47796313e0251"
+  "attacks_dev.json": "dcd5b1eb8b58a68a0a0414c05419d995ab0a65e58b5e0b431c6c4b7b0ada3c57",
+  "benign_dev.json": "996be24811dde39eb0bfb951577bb17b8969b1d6a604e78c7daf18447de8aa3e",
+  "benign_test.json": "db769a67dca064ce580fe709852f165390f57ae6d9672515a64a1587b581f62d"
  }
 }
