@@ -57,11 +57,20 @@
    "n_dev": 15,
    "n_test": 15,
    "imported": "2026-07-15"
+  },
+  "hard_benign": {
+   "description": "Fuente D: hard-negative benigns (admin vocab, abrupt topic shifts, security curiosity)",
+   "license": "self-authored",
+   "generator": "isolated Claude subagent, public agent brief only, blind to detector internals (0 tool_uses)",
+   "split": "dev+test",
+   "n_dev": 15,
+   "n_test": 15
   }
  },
  "test_freeze": null,
  "sha256": {
   "attacks_dev.json": "f3d2ca78131c6568ed15627844b426022e0a5611ed7170c42b1749dc034d9193",
-  "benign_dev.json": "35660747f66735c17e2c39f60bc6325ad236a2aa20976e2f2a5e631e46a66e96"
+  "benign_dev.json": "6b57303cbc73d05c8c415a217eaab68d0b0d8eb847382cc08e8f20d4e381d943",
+  "benign_test.json": "ddd0e25144d1ebfa6cffea16be6f3b5c8af3939065fc477d13c47796313e0251"
  }
 }
