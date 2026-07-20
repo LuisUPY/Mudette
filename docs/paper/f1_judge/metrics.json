@@ -1,0 +1,416 @@
+{
+ "l1_only": {
+  "n_attacks": 105,
+  "n_benign": 42,
+  "recall_flag": 0.1143,
+  "recall_block": 0.1143,
+  "fp_flag": 0.0238,
+  "fp_block": 0.0238,
+  "precision_flag": 0.9231,
+  "precision_block": 0.9231,
+  "median_first_flag_turn_multiturn": 3.0,
+  "factor_attribution_at_flag": {
+   "l1_high": 1.0
+  },
+  "by_category": {
+   "benign_admin_vocab": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 9,
+    "fp_flag": 0.1111
+   },
+   "benign_support": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 24,
+    "fp_flag": 0.0
+   },
+   "benign_topic_shift": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 9,
+    "fp_flag": 0.0
+   },
+   "crescendo": {
+    "n_attacks": 39,
+    "recall_flag": 0.0769,
+    "recall_block": 0.0769,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "jailbreak": {
+    "n_attacks": 48,
+    "recall_flag": 0.0208,
+    "recall_block": 0.0208,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "salami": {
+    "n_attacks": 10,
+    "recall_flag": 0.5,
+    "recall_block": 0.5,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "social_engineering": {
+    "n_attacks": 8,
+    "recall_flag": 0.375,
+    "recall_block": 0.375,
+    "n_benign": 0,
+    "fp_flag": null
+   }
+  },
+  "by_source": {
+   "domain_gen": {
+    "n_attacks": 35,
+    "recall_flag": 0.3143,
+    "recall_block": 0.3143,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "easy_benign": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 18,
+    "fp_flag": 0.0
+   },
+   "hard_benign": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 24,
+    "fp_flag": 0.0417
+   },
+   "jbb": {
+    "n_attacks": 40,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "safemt": {
+    "n_attacks": 30,
+    "recall_flag": 0.0333,
+    "recall_block": 0.0333,
+    "n_benign": 0,
+    "fp_flag": null
+   }
+  }
+ },
+ "l2_only": {
+  "n_attacks": 105,
+  "n_benign": 42,
+  "recall_flag": 0.0,
+  "recall_block": 0.0,
+  "fp_flag": 0.0,
+  "fp_block": 0.0,
+  "precision_flag": null,
+  "precision_block": null,
+  "median_first_flag_turn_multiturn": null,
+  "factor_attribution_at_flag": {},
+  "by_category": {
+   "benign_admin_vocab": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 9,
+    "fp_flag": 0.0
+   },
+   "benign_support": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 24,
+    "fp_flag": 0.0
+   },
+   "benign_topic_shift": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 9,
+    "fp_flag": 0.0
+   },
+   "crescendo": {
+    "n_attacks": 39,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "jailbreak": {
+    "n_attacks": 48,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "salami": {
+    "n_attacks": 10,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "social_engineering": {
+    "n_attacks": 8,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   }
+  },
+  "by_source": {
+   "domain_gen": {
+    "n_attacks": 35,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "easy_benign": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 18,
+    "fp_flag": 0.0
+   },
+   "hard_benign": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 24,
+    "fp_flag": 0.0
+   },
+   "jbb": {
+    "n_attacks": 40,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "safemt": {
+    "n_attacks": 30,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   }
+  }
+ },
+ "l1_l2": {
+  "n_attacks": 105,
+  "n_benign": 42,
+  "recall_flag": 0.1143,
+  "recall_block": 0.1143,
+  "fp_flag": 0.0238,
+  "fp_block": 0.0238,
+  "precision_flag": 0.9231,
+  "precision_block": 0.9231,
+  "median_first_flag_turn_multiturn": 3.0,
+  "factor_attribution_at_flag": {
+   "l1_high": 1.0,
+   "trajectory_high": 0.75,
+   "escalation": 0.5,
+   "proximity_high": 0.5
+  },
+  "by_category": {
+   "benign_admin_vocab": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 9,
+    "fp_flag": 0.1111
+   },
+   "benign_support": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 24,
+    "fp_flag": 0.0
+   },
+   "benign_topic_shift": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 9,
+    "fp_flag": 0.0
+   },
+   "crescendo": {
+    "n_attacks": 39,
+    "recall_flag": 0.0769,
+    "recall_block": 0.0769,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "jailbreak": {
+    "n_attacks": 48,
+    "recall_flag": 0.0208,
+    "recall_block": 0.0208,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "salami": {
+    "n_attacks": 10,
+    "recall_flag": 0.5,
+    "recall_block": 0.5,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "social_engineering": {
+    "n_attacks": 8,
+    "recall_flag": 0.375,
+    "recall_block": 0.375,
+    "n_benign": 0,
+    "fp_flag": null
+   }
+  },
+  "by_source": {
+   "domain_gen": {
+    "n_attacks": 35,
+    "recall_flag": 0.3143,
+    "recall_block": 0.3143,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "easy_benign": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 18,
+    "fp_flag": 0.0
+   },
+   "hard_benign": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 24,
+    "fp_flag": 0.0417
+   },
+   "jbb": {
+    "n_attacks": 40,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "safemt": {
+    "n_attacks": 30,
+    "recall_flag": 0.0333,
+    "recall_block": 0.0333,
+    "n_benign": 0,
+    "fp_flag": null
+   }
+  }
+ },
+ "l1_l2_judge": {
+  "n_attacks": 105,
+  "n_benign": 42,
+  "recall_flag": 0.1143,
+  "recall_block": 0.1143,
+  "fp_flag": 0.0238,
+  "fp_block": 0.0238,
+  "precision_flag": 0.9231,
+  "precision_block": 0.9231,
+  "median_first_flag_turn_multiturn": 3.0,
+  "factor_attribution_at_flag": {
+   "l1_high": 1.0,
+   "trajectory_high": 0.75,
+   "escalation": 0.5,
+   "proximity_high": 0.5
+  },
+  "by_category": {
+   "benign_admin_vocab": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 9,
+    "fp_flag": 0.1111
+   },
+   "benign_support": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 24,
+    "fp_flag": 0.0
+   },
+   "benign_topic_shift": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 9,
+    "fp_flag": 0.0
+   },
+   "crescendo": {
+    "n_attacks": 39,
+    "recall_flag": 0.0769,
+    "recall_block": 0.0769,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "jailbreak": {
+    "n_attacks": 48,
+    "recall_flag": 0.0208,
+    "recall_block": 0.0208,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "salami": {
+    "n_attacks": 10,
+    "recall_flag": 0.5,
+    "recall_block": 0.5,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "social_engineering": {
+    "n_attacks": 8,
+    "recall_flag": 0.375,
+    "recall_block": 0.375,
+    "n_benign": 0,
+    "fp_flag": null
+   }
+  },
+  "by_source": {
+   "domain_gen": {
+    "n_attacks": 35,
+    "recall_flag": 0.3143,
+    "recall_block": 0.3143,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "easy_benign": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 18,
+    "fp_flag": 0.0
+   },
+   "hard_benign": {
+    "n_attacks": 0,
+    "recall_flag": null,
+    "recall_block": null,
+    "n_benign": 24,
+    "fp_flag": 0.0417
+   },
+   "jbb": {
+    "n_attacks": 40,
+    "recall_flag": 0.0,
+    "recall_block": 0.0,
+    "n_benign": 0,
+    "fp_flag": null
+   },
+   "safemt": {
+    "n_attacks": 30,
+    "recall_flag": 0.0333,
+    "recall_block": 0.0333,
+    "n_benign": 0,
+    "fp_flag": null
+   }
+  },
+  "judge_invocations": 0,
+  "judge_denies": 0
+ }
+}
