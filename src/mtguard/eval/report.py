@@ -64,6 +64,24 @@ def render_markdown(
         ))
         lines.append("")
 
+    lines += [
+        "## Desglose por fuente (¿generaliza, o solo detecta el dominio propio?)",
+        "",
+        "Las fuentes externas (`jbb`, `safemt`) son contenido dañino genérico; `domain_gen` "
+        "ataca el threat model anunciado de Nexa (credenciales / export / exfil de prompt). "
+        "Un recall alto en `domain_gen` con recall bajo en las genéricas indica que el detector "
+        "está afinado a su dominio, no que generalice.",
+        "",
+    ]
+    for config, m in metrics_by_config.items():
+        lines += [f"### {config}", "", "| Fuente | n | recall@FLAG | recall@BLOCK | FP@FLAG |", "|---|---|---|---|---|"]
+        for src, g in m.get("by_source", {}).items():
+            n = g["n_attacks"] or g["n_benign"]
+            lines.append(
+                f"| {src} | {n} | {_pct(g['recall_flag'])} | {_pct(g['recall_block'])} | {_pct(g['fp_flag'])} |"
+            )
+        lines.append("")
+
     lines += ["## Desglose por categoría", ""]
     for config, m in metrics_by_config.items():
         lines += [f"### {config}", "", "| Categoría | n | recall@FLAG | recall@BLOCK | FP@FLAG |", "|---|---|---|---|---|"]

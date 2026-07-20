@@ -84,7 +84,19 @@
    "n_test": 18
   }
  },
- "test_freeze": null,
+ "test_freeze": {
+  "date": "2026-07-16",
+  "sha256_attacks_test": "8f92d17822208b75410faef73a39636d02acb0efa7a265ceb1508e7cde7df26c",
+  "sha256_benign_test": "db769a67dca064ce580fe709852f165390f57ae6d9672515a64a1587b581f62d",
+  "n_attacks": 105,
+  "n_benign": 42,
+  "n_scenarios": 147,
+  "attacks_by_source": {
+   "domain_gen": 35,
+   "jbb": 40,
+   "safemt": 30
+  }
+ },
  "sha256": {
   "attacks_dev.json": "dcd5b1eb8b58a68a0a0414c05419d995ab0a65e58b5e0b431c6c4b7b0ada3c57",
   "benign_dev.json": "996be24811dde39eb0bfb951577bb17b8969b1d6a604e78c7daf18447de8aa3e",
