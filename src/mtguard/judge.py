@@ -15,7 +15,10 @@ from mtguard.nim import (
 from mtguard.pack_loader import DemoPack
 from mtguard.trace import fusion_to_dict, l1_to_dict, l2_to_dict
 
-DEFAULT_JUDGE_THRESHOLD = 55
+# Phase 12 (F2a): 55 -> 30 after the dev gate-starvation diagnosis (Ghost #4).
+# At 30 the gate requires >=3 co-firing factors (or l1_medium + one) under
+# current fusion weights; dev benign WATCH traffic (max score 25) stays out.
+DEFAULT_JUDGE_THRESHOLD = 30
 
 _JUDGE_API_KEY_ERROR = (
     "Error Crítico: El Juez de Escalación está activo pero requiere una NVIDIA API Key "

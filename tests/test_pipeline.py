@@ -124,6 +124,20 @@ class TestEscalationJudge:
         fusion = FusionResult(risk_score=60, verdict=Verdict.ALERT)
         assert judge.should_invoke(fusion) is True
 
+    def test_should_invoke_on_watch_at_gate(self, judge: EscalationJudge) -> None:
+        from mtguard.models import FusionResult
+
+        # F2a: gate at 30 lets multi-factor WATCH turns reach the judge
+        fusion = FusionResult(risk_score=35, verdict=Verdict.WATCH)
+        assert judge.should_invoke(fusion) is True
+
+    def test_should_not_invoke_below_gate(self, judge: EscalationJudge) -> None:
+        from mtguard.models import FusionResult
+
+        # two-factor combos (score 25) must stay below the judge gate
+        fusion = FusionResult(risk_score=25, verdict=Verdict.WATCH)
+        assert judge.should_invoke(fusion) is False
+
     def test_judge_requires_api_key(self) -> None:
         pack = DemoPack.load(PACK)
         with pytest.raises(ValueError, match="NVIDIA API Key"):
