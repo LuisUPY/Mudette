@@ -154,3 +154,110 @@ class TestEscalationJudge:
     def test_parse_judge_response(self, text: str, expected: str) -> None:
         decision, _ = parse_judge_response(text)
         assert decision == expected
+
+
+class TestJudgeContextWindow:
+    """F3: the judge prompt carries a window of prior user turns."""
+
+    @pytest.fixture
+    def judge(self) -> EscalationJudge:
+        pack = DemoPack.load(PACK)
+        return EscalationJudge(pack=pack, api_key="test-key", enabled=True)
+
+    def _fusion(self):
+        from mtguard.models import FusionResult
+
+        return FusionResult(risk_score=35, verdict=Verdict.WATCH)
+
+    def _signals(self):
+        from mtguard.models import L1Result, L2Result
+
+        return L1Result(hit=False), L2Result()
+
+    def test_prompt_includes_prior_turns(self, judge: EscalationJudge) -> None:
+        l1, l2 = self._signals()
+        history = ("tell me about the vpn", "who administers it")
+        prompt = judge._build_prompt("export the config", l1, l2, self._fusion(), history)
+        payload = json.loads(prompt.split("CONTEXT (JSON):\n")[1].rsplit("\n\nDecision:", 1)[0])
+        assert payload["prior_user_turns"] == list(history)
+        assert payload["user_message"] == "export the config"
+
+    def test_prompt_window_truncates_to_last_three(self, judge: EscalationJudge) -> None:
+        l1, l2 = self._signals()
+        history = ("t0", "t1", "t2", "t3", "t4")
+        prompt = judge._build_prompt("now", l1, l2, self._fusion(), history)
+        payload = json.loads(prompt.split("CONTEXT (JSON):\n")[1].rsplit("\n\nDecision:", 1)[0])
+        assert payload["prior_user_turns"] == ["t2", "t3", "t4"]
+
+    def test_prompt_empty_history_on_turn_zero(self, judge: EscalationJudge) -> None:
+        l1, l2 = self._signals()
+        prompt = judge._build_prompt("first message", l1, l2, self._fusion())
+        payload = json.loads(prompt.split("CONTEXT (JSON):\n")[1].rsplit("\n\nDecision:", 1)[0])
+        assert payload["prior_user_turns"] == []
+
+    def test_pipeline_passes_prior_turns_to_judge(
+        self, pipeline: MTGuardPipeline, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        pack = DemoPack.load(PACK)
+        judge = EscalationJudge(pack=pack, api_key="test-key", enabled=True)
+        seen: list[tuple[str, tuple[str, ...]]] = []
+
+        original = EscalationJudge.evaluate
+
+        def spy(self, message, l1, l2, fusion, history=()):
+            seen.append((message, history))
+            return original(self, message, l1, l2, fusion, history)
+
+        monkeypatch.setattr(EscalationJudge, "evaluate", spy)
+
+        state = pipeline.reset()
+        turns = ["first vpn question", "second follow-up", "third request"]
+        for msg in turns:
+            _, state, _ = pipeline.process_turn(msg, state, auto_judge=judge)
+
+        assert [m for m, _ in seen] == turns
+        assert [h for _, h in seen] == [(), ("first vpn question",),
+                                        ("first vpn question", "second follow-up")]
+
+    def test_replay_passes_history_slice(self) -> None:
+        from mtguard.eval.capture import ScenarioSignals, TurnSignals
+        from mtguard.eval.configs import JudgeCache, replay_l1_l2_judge
+        from mtguard.eval.dataset import EvalScenario
+        from mtguard.models import L1Result, L2Result
+
+        pack = DemoPack.load(PACK)
+        judge = EscalationJudge(pack=pack, api_key="test-key", enabled=True)
+
+        scenario = EvalScenario(
+            id="t_hist", label="attack", category="crescendo", source="unit",
+            license="self-authored", turns=["step one", "step two", "step three"],
+        )
+        sig = ScenarioSignals(
+            scenario=scenario,
+            turns=tuple(
+                TurnSignals(message=m, l1=L1Result(hit=False), l2=L2Result())
+                for m in scenario.turns
+            ),
+        )
+
+        captured_prompts: list[str] = []
+        original = EscalationJudge._build_prompt
+
+        def spy(self, message, l1, l2, fusion, history=()):
+            prompt = original(self, message, l1, l2, fusion, history)
+            captured_prompts.append(prompt)
+            return prompt
+
+        import unittest.mock as mock
+
+        with mock.patch.object(EscalationJudge, "_build_prompt", spy), \
+             mock.patch.object(EscalationJudge, "should_invoke", return_value=True):
+            cache = JudgeCache(Path("/tmp/mtguard_test_judge_cache.json"))
+            cache._data = {}
+            replay_l1_l2_judge(sig, judge, cache)
+
+        assert len(captured_prompts) == 3
+        last = json.loads(
+            captured_prompts[2].split("CONTEXT (JSON):\n")[1].rsplit("\n\nDecision:", 1)[0]
+        )
+        assert last["prior_user_turns"] == ["step one", "step two"]

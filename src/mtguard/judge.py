@@ -20,6 +20,12 @@ from mtguard.trace import fusion_to_dict, l1_to_dict, l2_to_dict
 # current fusion weights; dev benign WATCH traffic (max score 25) stays out.
 DEFAULT_JUDGE_THRESHOLD = 30
 
+# Phase 13 (F3a): prior user turns included in the judge prompt. F2c showed a
+# single-turn judge ALLOWs crescendo/salami turns whose isolated text reads as
+# routine IT work; the window makes the accumulated sequence visible. Raw
+# turns (no AI summary) preserve latency, cost, and evidence integrity.
+JUDGE_CONTEXT_WINDOW = 3
+
 _JUDGE_API_KEY_ERROR = (
     "Error Crítico: El Juez de Escalación está activo pero requiere una NVIDIA API Key "
     "válida para el modelo mini juez."
@@ -63,11 +69,12 @@ class EscalationJudge:
         l1: L1Result,
         l2: L2Result,
         fusion: FusionResult,
+        history: tuple[str, ...] = (),
     ) -> JudgeResult:
         if not self.should_invoke(fusion):
             return JudgeResult(enabled=self.enabled, invoked=False)
 
-        prompt = self._build_prompt(message, l1, l2, fusion)
+        prompt = self._build_prompt(message, l1, l2, fusion, history)
         raw = self._call_llm(prompt)
         decision, reason = parse_judge_response(raw)
         return JudgeResult(
@@ -83,8 +90,10 @@ class EscalationJudge:
         l1: L1Result,
         l2: L2Result,
         fusion: FusionResult,
+        history: tuple[str, ...] = (),
     ) -> str:
         context = {
+            "prior_user_turns": list(history[-JUDGE_CONTEXT_WINDOW:]),
             "user_message": message,
             "l1": l1_to_dict(l1),
             "l2": l2_to_dict(l2),

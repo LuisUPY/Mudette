@@ -20,6 +20,9 @@ class ConversationState:
     proximity_history: list[dict[str, float]] = field(default_factory=list)
     drift_history: list[float] = field(default_factory=list)
     trajectory_ewma: float = 0.0
+    # Raw user turns, appended per evaluate(); source of truth for the
+    # judge's conversation window (F3).
+    messages: list[str] = field(default_factory=list)
 
 
 class TrajectoryGuard:
@@ -82,6 +85,7 @@ class TrajectoryGuard:
         state.turn_embeddings.append(e_t)
         state.proximity_history.append(dict(proximity))
         state.drift_history.append(drift_step)
+        state.messages.append(message)
 
         result = L2Result(
             safe_score=round(safe_score, 4),

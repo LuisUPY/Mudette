@@ -108,11 +108,12 @@ def replay_l1_l2_judge(
     factors: list[list[str]] = []
     invocations = 0
     denies = 0
-    for turn in sig.turns:
+    for i, turn in enumerate(sig.turns):
         fusion = fusion_engine.fuse(turn.l1, turn.l2)
         if judge.should_invoke(fusion):
             invocations += 1
-            prompt = judge._build_prompt(turn.message, turn.l1, turn.l2, fusion)
+            history = tuple(t.message for t in sig.turns[:i])
+            prompt = judge._build_prompt(turn.message, turn.l1, turn.l2, fusion, history)
             key = JudgeCache.key(prompt, judge.model)
             cached = cache.get(key)
             if cached is None:

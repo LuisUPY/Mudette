@@ -53,7 +53,14 @@ class MTGuardPipeline:
 
         judge_result = judge
         if judge_result is None and auto_judge is not None:
-            judge_result = auto_judge.evaluate(message, l1_result, l2_result, fusion_result)
+            # L2 already appended the current message; prior turns exclude it.
+            judge_result = auto_judge.evaluate(
+                message,
+                l1_result,
+                l2_result,
+                fusion_result,
+                history=tuple(state.messages[:-1]),
+            )
 
         if judge_result and judge_result.invoked and judge_result.decision == "DENY":
             fusion_result = self.fusion.apply_judge_deny(fusion_result)
